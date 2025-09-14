@@ -1,429 +1,91 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>簡易指示システム</title>
-<style>
-  :root{
-    --bg:#f6f7fb;
-    --card:#ffffff;
-    --accent:#2b7cff;
-    --muted:#666;
-    --success:#27ae60;
-  }
-  body{
-    margin:0;
-    font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Arial";
-    background:linear-gradient(180deg,#eef3ff 0%, var(--bg) 100%);
-    color:#111;
-    min-height:100vh;
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
-    padding:28px;
-  }
-  .container{
-    width:960px;
-    max-width:98%;
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:18px;
-  }
-  .card{
-    background:var(--card);
-    border-radius:10px;
-    box-shadow: 0 6px 18px rgba(15,30,60,0.08);
-    padding:18px;
-  }
-  header{
-    grid-column:1 / -1;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    margin-bottom:6px;
-  }
-  .title{
-    display:flex;
-    flex-direction:column;
-  }
-  h1{ margin:0; font-size:18px }
-  .sub{ color:var(--muted); font-size:13px }
-  .clock{
-    font-weight:700;
-    font-size:20px;
-    color:var(--accent);
-    text-align:right;
-    min-width:180px;
-  }
-
-  .role-select{
-    display:flex;
-    gap:8px;
-    margin-bottom:12px;
-  }
-  .role-btn{
-    padding:8px 12px;
-    border-radius:8px;
-    border:1px solid #ddd;
-    background:#fff;
-    cursor:pointer;
-    font-weight:600;
-  }
-  .role-btn.active{
-    background:var(--accent);
-    color:#fff;
-    border-color:transparent;
-  }
-
-  .controls{
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-  }
-  .buttons{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-  }
-  .op-btn{
-    padding:12px 14px;
-    border-radius:10px;
-    border:1px solid rgba(0,0,0,0.08);
-    background:linear-gradient(180deg,#fff,#f4f7ff);
-    cursor:pointer;
-    font-weight:700;
-    flex:1 1 45%;
-    min-width:120px;
-  }
-  .op-btn:active{ transform:translateY(1px) }
-  .log{
-    padding:12px;
-    border-radius:8px;
-    background:#f7f9ff;
-    border:1px dashed #e6ecff;
-    min-height:74px;
-  }
-  .status{
-    font-size:16px;
-    font-weight:700;
-    margin-bottom:6px;
-  }
-  .muted{
-    color:var(--muted);
-    font-size:13px;
-  }
-
-  /* 切替担当側 */
-  .instruction{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
-  .bubble{
-    padding:12px;
-    border-radius:10px;
-    background:#fff;
-    border:1px solid #e1e7ff;
-  }
-  .bubble strong{ display:block; margin-bottom:6px }
-  .time-small{ font-size:12px; color:var(--muted) }
-
-  footer.small{
-    grid-column:1 / -1;
-    margin-top:8px;
-    text-align:center;
-    color:var(--muted);
-    font-size:12px;
-  }
-
-  @media (max-width:800px){
-    .container{ grid-template-columns:1fr; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>指示システム</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 40px; }
+    #time { font-size: 24px; margin-bottom: 20px; }
+    button { margin: 5px; padding: 10px 20px; }
+    .hidden { display: none; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="title">
-        <h1>簡易 指示システム（前方/後方ドア）</h1>
-        <div class="sub">ロールを切り替えて、総合指示 → 切替担当 に指示を送れます</div>
-      </div>
-      <div class="clock" id="clock">--:--:--</div>
-    </header>
+  <div id="time"></div>
 
-    <!-- 総合指示側パネル -->
-    <section class="card" id="panel-master">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div class="muted">アカウント</div>
-          <div style="margin-top:6px;">
-            <div class="role-select" aria-hidden>
-              <button class="role-btn" id="role-kirikae">切替担当</button>
-              <button class="role-btn active" id="role-master">総合指示</button>
-            </div>
-          </div>
-        </div>
-        <div style="text-align:right">
-          <div class="muted">あなたの表示</div>
-          <div class="status" id="current-role-label">総合指示</div>
-        </div>
-      </div>
+  <h2>アカウントを選択</h2>
+  <select id="accountSelect">
+    <option value="">選択してください</option>
+    <option value="general">総合指示</option>
+    <option value="switch">切替担当</option>
+  </select>
 
-      <hr style="margin:12px 0;border:none;border-top:1px solid #eef2ff">
-
-      <div class="controls">
-        <div class="muted">操作（総合指示用）</div>
-        <div class="buttons" role="group" aria-label="操作ボタン">
-          <button class="op-btn" data-door="前方" data-action="開扉">前方開扉</button>
-          <button class="op-btn" data-door="後方" data-action="開扉">後方開扉</button>
-          <button class="op-btn" data-door="前方" data-action="閉扉">前方閉扉</button>
-          <button class="op-btn" data-door="後方" data-action="閉扉">後方閉扉</button>
-        </div>
-
-        <div class="muted">直近の送信ログ</div>
-        <div class="log" id="master-log">まだ指示は送られていません。</div>
-      </div>
-    </section>
-
-    <!-- 切替担当側パネル -->
-    <section class="card" id="panel-kirikae">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div class="muted">アカウント</div>
-          <div style="margin-top:6px;">
-            <div class="role-select" aria-hidden>
-              <button class="role-btn active" id="role-kirikae2">切替担当</button>
-              <button class="role-btn" id="role-master2">総合指示</button>
-            </div>
-          </div>
-        </div>
-        <div style="text-align:right">
-          <div class="muted">あなたの表示</div>
-          <div class="status" id="current-role-label-2">切替担当</div>
-        </div>
-      </div>
-
-      <hr style="margin:12px 0;border:none;border-top:1px solid #eef2ff">
-
-      <div class="instruction">
-        <div class="muted">指示（切替担当側）</div>
-        <div class="bubble" id="instruction-bubble">
-          <strong id="instruction-text">何も指示は出ていません。</strong>
-          <div class="time-small" id="instruction-time"></div>
-        </div>
-        <div class="muted">（指示は送信から10秒後に自動で消えます）</div>
-      </div>
-    </section>
-
-    <footer class="small">
-      BroadcastChannel / localStorage で同一ブラウザ内の別タブ同期に対応。音は Web Audio API を利用しています。
-    </footer>
+  <div id="generalPanel" class="hidden">
+    <h3>総合指示アカウント</h3>
+    <button onclick="sendCommand('前方ドアを開扉してください。')">前方開扉</button>
+    <button onclick="sendCommand('後方ドアを開扉してください。')">後方開扉</button>
+    <button onclick="sendCommand('前方ドアを閉扉してください。')">前方閉扉</button>
+    <button onclick="sendCommand('後方ドアを閉扉してください。')">後方閉扉</button>
   </div>
 
-<script>
-/* ---------- 現在時刻表示 ---------- */
-const clockEl = document.getElementById('clock');
-function updateClock(){
-  const d = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  clockEl.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-updateClock();
-setInterval(updateClock, 1000);
+  <div id="switchPanel" class="hidden">
+    <h3>切替担当アカウント</h3>
+    <div id="instruction">何も指示は出ていません。</div>
+  </div>
 
-/* ---------- 状態管理と通信（BroadcastChannel or localStorage fallback） ---------- */
-const CHANNEL_NAME = 'kirikae-instruction-channel';
-let channel = null;
-let useLocalStorageFallback = false;
+  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-if ('BroadcastChannel' in window) {
-  channel = new BroadcastChannel(CHANNEL_NAME);
-} else {
-  useLocalStorageFallback = true;
-  channel = {
-    postMessage: (msg) => {
-      // write to localStorage to trigger storage event across tabs
-      localStorage.setItem(CHANNEL_NAME, JSON.stringify({msg:msg, t:Date.now()}));
-      // also call onmessage locally
-      window.dispatchEvent(new CustomEvent('localstorage-sim', {detail: {msg}}));
-    },
-    onmessage: null
-  };
-}
-
-// helper to send instruction
-function sendInstruction(instruction){
-  if (channel.postMessage) channel.postMessage(instruction);
-  // fallback: also save last instruction to localStorage for initial load
-  localStorage.setItem('last-instruction', JSON.stringify({instruction, ts:Date.now()}));
-}
-
-/* ---------- UI要素 ---------- */
-const opButtons = document.querySelectorAll('.op-btn');
-const masterLog = document.getElementById('master-log');
-const instrText = document.getElementById('instruction-text');
-const instrTime = document.getElementById('instruction-time');
-
-let kirikaeClearTimer = null; // 指示を10秒で消すタイマー
-
-function formatTimestamp(date){
-  const pad = n => String(n).padStart(2,'0');
-  return `${date.getFullYear()}/${pad(date.getMonth()+1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-}
-
-/* 音を2秒鳴らす（Web Audio API） */
-function playBeep(durationMs = 2000){
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = 'sine';
-    o.frequency.setValueAtTime(880, ctx.currentTime); // 880Hz
-    g.gain.setValueAtTime(0.0001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02); // attack
-    o.connect(g);
-    g.connect(ctx.destination);
-    o.start();
-    o.stop(ctx.currentTime + durationMs/1000);
-    // release
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + durationMs/1000 - 0.05);
-    // close context after done
-    setTimeout(()=>{ try{ ctx.close() } catch(e){} }, durationMs + 300);
-  }catch(e){
-    // 再生できない場合は何もしない
-    console.warn('Audio playback failed:', e);
-  }
-}
-
-/* ボタン押下で指示を作って送る */
-opButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    const door = btn.getAttribute('data-door');
-    const action = btn.getAttribute('data-action');
-    const text = `${door}ドアを${action}してください。`;
-    const payload = {
-      type: 'instruction',
-      door, action, text,
-      ts: Date.now()
-    };
-    // ログ更新（総合指示側）
-    masterLog.textContent = `${formatTimestamp(new Date(payload.ts))} — 「${payload.text}」 を送信しました。`;
-    // 送信
-    sendInstruction(payload);
-    // 総合指示側でもローカルで音を鳴らす（ユーザが押した瞬間に音が鳴る）
-    playBeep(2000);
-  });
-});
-
-/* 受信ハンドラ（BroadcastChannel と localStorage fallback 両対応） */
-function handleIncoming(payload){
-  if(!payload || typeof payload !== 'object') return;
-  if(payload.type === 'instruction'){
-    // 切替担当側に表示
-    showInstructionOnKirikae(payload);
-    // 総合指示側でもログを更新（他タブからの受信時）
-    const mlog = document.getElementById('master-log');
-    if(mlog){
-      mlog.textContent = `${formatTimestamp(new Date(payload.ts))} — 「${payload.text}」 を受信しました。`;
+  <script>
+    // 時計表示
+    function updateTime() {
+      document.getElementById("time").textContent = new Date().toLocaleString();
     }
-    // 再生（受信側でも鳴らす）
-    playBeep(2000);
-  }
-}
+    setInterval(updateTime, 1000); updateTime();
 
-/* BroadcastChannel の受信設定 */
-if ('BroadcastChannel' in window) {
-  channel.onmessage = (ev) => {
-    // message may be the raw payload
-    handleIncoming(ev.data);
-  };
-} else {
-  // localStorage fallback: listen to storage events
-  window.addEventListener('storage', (ev) => {
-    if(ev.key === CHANNEL_NAME && ev.newValue){
-      try{
-        const obj = JSON.parse(ev.newValue);
-        handleIncoming(obj.msg);
-      }catch(e){}
+    // アカウント切替
+    const accountSelect = document.getElementById("accountSelect");
+    const generalPanel = document.getElementById("generalPanel");
+    const switchPanel = document.getElementById("switchPanel");
+    const instructionDiv = document.getElementById("instruction");
+
+    accountSelect.addEventListener("change", () => {
+      generalPanel.classList.add("hidden");
+      switchPanel.classList.add("hidden");
+      if (accountSelect.value === "general") generalPanel.classList.remove("hidden");
+      if (accountSelect.value === "switch") switchPanel.classList.remove("hidden");
+    });
+
+    // 指示送信
+    function sendCommand(cmd) {
+      fetch("command.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "command=" + encodeURIComponent(cmd)
+      });
+      document.getElementById("beep").play();
     }
-  });
-  // also handle simulated local dispatch (for same-tab send)
-  window.addEventListener('localstorage-sim', (ev) => {
-    handleIncoming(ev.detail.msg);
-  });
-}
 
-/* 切替担当側に指示を表示し、10秒後に消去する */
-function showInstructionOnKirikae(payload){
-  if(!payload || !payload.text) return;
-  instrText.textContent = `（${payload.door}）ドアを${payload.action}してください。`;
-  instrTime.textContent = `指示受信: ${formatTimestamp(new Date(payload.ts))}`;
-  // もし既に消去タイマーが動いていればリセット
-  if(kirikaeClearTimer) {
-    clearTimeout(kirikaeClearTimer);
-    kirikaeClearTimer = null;
-  }
-  // 10秒後に消去して「何も指示は出ていません。」に戻す
-  kirikaeClearTimer = setTimeout(() => {
-    instrText.textContent = '何も指示は出ていません。';
-    instrTime.textContent = '';
-    kirikaeClearTimer = null;
-  }, 10000);
-}
+    // 切替担当用ポーリング
+    if (accountSelect.value === "switch") poll();
+    accountSelect.addEventListener("change", () => {
+      if (accountSelect.value === "switch") poll();
+    });
 
-/* ページ読み込み時に最後の指示を読み込む（他タブから開いたとき向け） */
-(function initFromStorage(){
-  const last = localStorage.getItem('last-instruction');
-  if(last){
-    try{
-      const obj = JSON.parse(last);
-      if(obj && obj.instruction){
-        // もし最後の指示が直近（例えば30秒以内）なら表示する
-        const age = Date.now() - obj.ts;
-        if(age < 30000){
-          // show it
-          showInstructionOnKirikae(obj.instruction);
-        } else {
-          // 古ければ無視（切替担当側はデフォルト表示）
+    function poll() {
+      setInterval(async () => {
+        if (accountSelect.value !== "switch") return;
+        let res = await fetch("command.php");
+        let text = await res.text();
+        if (text.trim() && text.trim() !== "NONE") {
+          instructionDiv.textContent = text;
+          document.getElementById("beep").play();
+          setTimeout(() => {
+            instructionDiv.textContent = "何も指示は出ていません。";
+            fetch("command.php", {method: "POST", body: "command=NONE"});
+          }, 10000);
         }
-      }
-    }catch(e){}
-  }
-})();
-
-/* ---------- ロール切替（UI上の見た目切り替え） ---------- */
-function setActiveRole(role){
-  // role: 'master' or 'kirikae'
-  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('current-role-label').textContent = (role === 'master' ? '総合指示' : '切替担当');
-  document.getElementById('current-role-label-2').textContent = (role === 'master' ? '総合指示' : '切替担当');
-  // visually highlight the corresponding role buttons in each panel
-  if(role === 'master'){
-    document.getElementById('role-master').classList.add('active');
-    document.getElementById('role-master2').classList.add('active');
-  } else {
-    document.getElementById('role-kirikae').classList.add('active');
-    document.getElementById('role-kirikae2').classList.add('active');
-  }
-}
-// attach click handlers for both sets of role buttons
-document.getElementById('role-master').addEventListener('click', () => setActiveRole('master'));
-document.getElementById('role-master2').addEventListener('click', () => setActiveRole('master'));
-document.getElementById('role-kirikae').addEventListener('click', () => setActiveRole('kirikae'));
-document.getElementById('role-kirikae2').addEventListener('click', () => setActiveRole('kirikae'));
-
-// default
-setActiveRole('master');
-
-/* ---------- 端末のオーディオ自動再生制限について（注意） ---------- */
-/*
-  多くのブラウザではユーザー操作がないと音が鳴らない制限があるため、
-  最初に音を確実に鳴らすにはユーザーによる操作（ボタン押下等）が必要です。
-  本実装では総合指示のボタン押下時に音を鳴らすため、通常は問題ありません。
-*/
-
-</script>
+      }, 2000); // 2秒ごとにチェック
+    }
+  </script>
 </body>
 </html>
